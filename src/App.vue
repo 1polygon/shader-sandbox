@@ -1,5 +1,13 @@
 <script setup>
+import { useRoute, useRouter } from "vue-router";
 import Header from "./components/Header.vue";
+import app from "./store/app.js";
+const router = useRouter();
+const route = useRoute();
+router.beforeEach((to, from) => {
+  app.state.route = to;
+});
+app.state.route = route;
 </script>
 
 <template>
