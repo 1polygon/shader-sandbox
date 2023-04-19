@@ -10,32 +10,31 @@ const state = reactive({
     list: [
         {
             type: "color",
-            key: "Test0",
-            value: [0.73, 0.23, 0.23, 1.0]
+            key: "BoxColor",
+            value: [0.13, 0.12, 0.16, 1.0]
         },
         {
             type: "float",
-            key: "Test1",
-            value: 0.0
+            key: "BoxScale",
+            value: 1.0,
+            range: {
+                min: 0.0,
+                max: 1.0
+            }
         },
         {
             type: "vec2",
-            key: "Test2",
-            value: [0.1, 0.2]
-        },
-        {
-            type: "vec3",
-            key: "Test3",
-            value: [0.3, 0.4, 0.5]
+            key: "BoxSize",
+            value: [0.5, 0.3]
         },
         {
             type: "vec4",
-            key: "Test4",
-            value: [0.3, 0.4, 0.5, 0.6]
+            key: "BoxCornerRadius",
+            value: [2.7, 0.3, 1.3, 2.3]
         },
         {
             type: "texture",
-            key: "Test5",
+            key: "SomeTexture",
             value: {
                 src: "",
                 width: 0,
@@ -108,7 +107,7 @@ function submitProperty() {
     } else {
         // Update property
 
-        if(property.key != state.dialog.key) {
+        if (property.key != state.dialog.key) {
             // Save previous key on rename to be later removed when updating uniforms
             property.prevKey = property.key;
         }
@@ -237,8 +236,8 @@ function loadImage(property, image) {
                 <template v-else-if="prop.type == 'float'">
                     <div class="key"><span>uniform float </span>{{ prop.key }}</div>
                     <div class="value">
-                        <v-slider v-if="prop.range" :min="prop.range.min" :max="prop.range.max" v-model="prop.value" hide-details thumb-label
-                            @update:modelValue="emit('property:update', prop)" />
+                        <v-slider v-if="prop.range" :min="prop.range.min" :max="prop.range.max" v-model="prop.value"
+                            hide-details thumb-label @update:modelValue="emit('property:update', prop)" />
                         <v-text-field v-else density="compact" step="0.1" hide-details v-model="prop.value" type="number"
                             @update:modelValue="emit('property:update', prop)"></v-text-field>
                     </div>
