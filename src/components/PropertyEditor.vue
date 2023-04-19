@@ -1,5 +1,5 @@
 <script setup>
-import { reactive } from "vue";
+import { onMounted, reactive } from "vue";
 
 const emit = defineEmits(["property:update", "property:delete"]);
 const state = reactive({
@@ -11,7 +11,7 @@ const state = reactive({
         {
             type: "color",
             key: "Test0",
-            value: [0.0, 0.0, 0.0, 1.0]
+            value: [0.73, 0.23, 0.23, 1.0]
         },
         {
             type: "float",
@@ -57,6 +57,12 @@ const state = reactive({
     }
 });
 
+onMounted(() => {
+    for (const property of state.list) {
+        emit("property:update", property);
+    }
+});
+
 function updateColor(color) {
     state.colorPicker.property.value[0] = color.r / 255.0;
     state.colorPicker.property.value[1] = color.g / 255.0;
@@ -91,6 +97,8 @@ function submitProperty() {
     state.dialog.visible = false;
     let property = state.dialog.edit;
     if (!property) {
+        // Create new property
+
         property = {
             key: state.dialog.key,
             type: state.dialog.type,
@@ -98,8 +106,17 @@ function submitProperty() {
         };
         state.list.push(property);
     } else {
+        // Update property
+
+        if(property.key != state.dialog.key) {
+            // Save previous key on rename to be later removed when updating uniforms
+            property.prevKey = property.key;
+        }
+
         property.key = state.dialog.key;
+
         if (property.type != state.dialog.type) {
+            // Remove previously used texture
             if (property.type == "texture" && property.value.texture) {
                 property.value.texture.destroy();
                 property.value.texture = null;
@@ -203,6 +220,8 @@ function loadImage(property, image) {
     <div class="properties pt-1">
         <div v-for="prop in state.list">
             <div class="property">
+
+                <!-- Color -->
                 <template v-if="prop.type == 'color'">
                     <div class="key"><span>uniform vec4 </span>{{ prop.key }}</div>
                     <div class="value d-block">
@@ -213,15 +232,19 @@ function loadImage(property, image) {
                         </div>
                     </div>
                 </template>
+
+                <!-- Float -->
                 <template v-else-if="prop.type == 'float'">
                     <div class="key"><span>uniform float </span>{{ prop.key }}</div>
                     <div class="value">
-                        <v-slider v-if="prop.range" :min="prop.range.min" :max="prop.range.max" hide-details thumb-label
+                        <v-slider v-if="prop.range" :min="prop.range.min" :max="prop.range.max" v-model="prop.value" hide-details thumb-label
                             @update:modelValue="emit('property:update', prop)" />
-                        <v-text-field v-else density="compact" step="0.1" hide-details v-model="prop.value"
-                            type="number" @update:modelValue="emit('property:update', prop)"></v-text-field>
+                        <v-text-field v-else density="compact" step="0.1" hide-details v-model="prop.value" type="number"
+                            @update:modelValue="emit('property:update', prop)"></v-text-field>
                     </div>
                 </template>
+
+                <!-- Vector -->
                 <template v-else-if="prop.type == 'vec2' || prop.type == 'vec3' || prop.type == 'vec4'">
                     <div class="key"><span>{{ "uniform " + prop.type + " " }}</span>{{ prop.key }}</div>
                     <div class="value">
@@ -230,6 +253,8 @@ function loadImage(property, image) {
                             @update:modelValue="emit('property:update', prop)"></v-text-field>
                     </div>
                 </template>
+
+                <!-- Texture -->
                 <template v-else-if="prop.type == 'texture'">
                     <div class="key"><span>uniform sampler2D </span>{{ prop.key }}</div>
                     <div class="value">
@@ -244,6 +269,7 @@ function loadImage(property, image) {
                         </div>
                     </div>
                 </template>
+
                 <div class="ml-2 actions">
                     <v-btn icon="mdi-pencil" size="x-small" variant="plain" @click="showEditDialog(prop)"></v-btn>
                     <v-btn icon="mdi-close" color="error" size="x-small" variant="plain"

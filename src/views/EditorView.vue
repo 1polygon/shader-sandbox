@@ -12,7 +12,7 @@ const canvas = ref();
  * @type {EditorViewport}
  */
 let viewport;
-
+const properties = new Map();
 const state = reactive({
     tab: "fragment",
     vertex: defaultShader.vertex,
@@ -26,7 +26,7 @@ const state = reactive({
 
 onMounted(() => {
     viewport = new EditorViewport(canvas.value);
-    setTimeout(() => compile(), 0);
+    requestAnimationFrame(compile);
     document.addEventListener("keydown", keydown);
 });
 
@@ -69,15 +69,16 @@ function compile() {
         shader.reload();
         const ms = performance.now() - time;
         console.log("done", ms + "ms");
+        shader.use();
+        applyAllUniforms();
     } catch (err) {
-        console.log(err);
+        console.error(err);
         const errIndex = err.indexOf ? err.indexOf("ERROR") : -1;
         if (errIndex != -1) {
             const args = err.substr().split(":");
             const line = args[3];
             state.error.line = line;
             state.error.message = err.substr(errIndex);
-            //
         } else {
             state.error.message = err;
         }
@@ -85,6 +86,15 @@ function compile() {
 }
 
 function updateProperty(property) {
+    // Remove old property/uniform if the key has been renamed
+    if (property.prevKey) {
+        properties.delete(property.prevKey);
+        property.prevKey = undefined;
+    }
+    properties.set(property.key, property);
+
+    if (!viewport) return;
+
     if (property.type == "color" || property.type == "vec4") {
         viewport.shader.setVector4(property.key, property.value);
     }
@@ -108,9 +118,23 @@ function updateProperty(property) {
 }
 
 function deleteProperty(property) {
+    properties.delete(property.key);
     if (property.value.texture) {
         property.value.texture.destroy();
         property.value.texture = null;
+    }
+}
+
+function applyAllUniforms() {
+    for (const property of properties.values()) {
+        updateProperty(property);
+    }
+    canvasResize();
+}
+
+function canvasResize() {
+    if (viewport) {
+        viewport.shader.setVector2("Size", [viewport.canvas.width, viewport.canvas.height]);
     }
 }
 </script>
@@ -118,7 +142,7 @@ function deleteProperty(property) {
 <template>
     <div class="container">
         <div class="viewer">
-            <canvas ref="canvas"></canvas>
+            <canvas ref="canvas" v-resize="canvasResize"></canvas>
             <div class="py-3 text-medium-emphasis">Input</div>
             <PropertyEditor @property:update="updateProperty" @property:delete="deleteProperty" />
         </div>
