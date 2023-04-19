@@ -1,6 +1,5 @@
 <script setup>
 import app from "../store/app.js";
-console.log(app.state);
 </script>
 
 <template>
