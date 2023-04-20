@@ -9,6 +9,9 @@ import app from "../store/app.js";
             <v-btn icon="mdi-drawing-box" to="/"></v-btn>
         </template>
         <template v-slot:append>
+            <v-btn rounded href="https://github.com/1polygon/shader-sandbox" target="_blank">
+                <img width="20" src="@/assets/github-mark-white.svg" />
+            </v-btn>
         </template>
     </v-app-bar>
 </template>
